@@ -5,6 +5,7 @@ LIB:=$(TOPDIR)/lib
 
 COBJS-y		+= $(LIB)/string.o
 COBJS-y		+= $(LIB)/eabi_utils.o
+COBJS-y		+= $(LIB)/libgcc_utils.o
 COBJS-y		+= $(LIB)/div.o
 
 COBJS-$(CONFIG_CRC32)	+= $(LIB)/crc32.o

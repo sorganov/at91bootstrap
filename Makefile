@@ -264,7 +264,7 @@ endif
 
 #  -lc		tells the linker to tie in libc
 #  -lgcc 	tells the linker to tie in libgcc
-LDLIBS =
+LDLIBS = -lgcc
 
 gccversion := $(shell expr `$(CC) -dumpversion`)
 
