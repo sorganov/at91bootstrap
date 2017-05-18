@@ -115,7 +115,7 @@ HOSTARCH := $(shell uname -m | sed -e s/arm.*/arm/)
 
 AS=$(CROSS_COMPILE)gcc
 CC=$(CROSS_COMPILE)gcc
-LD=$(CROSS_COMPILE)ld
+LD=$(CROSS_COMPILE)gcc
 NM= $(CROSS_COMPILE)nm
 SIZE=$(CROSS_COMPILE)size
 OBJCOPY=$(CROSS_COMPILE)objcopy
@@ -221,8 +221,6 @@ include	driver/driver.mk
 include	contrib/driver/driver.mk
 include	fs/src/fat.mk
 
-GC_SECTIONS=--gc-sections
-
 NOSTDINC_FLAGS=-nostdinc -isystem $(shell $(CC) -print-file-name=include)
 
 CPPFLAGS=$(NOSTDINC_FLAGS) -ffunction-sections -g -Os -Wall \
@@ -257,14 +255,16 @@ endif
 #  -Wl,...:     tell GCC to pass this to linker.
 #    -Map:      create map file
 #    --cref:    add cross reference to map file
-#  -lc 	   : 	tells the linker to tie in newlib
-#  -lgcc   : 	tells the linker to tie in newlib
-LDFLAGS=-nostartfiles -Map=$(BINDIR)/$(BOOT_NAME).map --cref -static
-LDFLAGS+=-T $(link_script) $(GC_SECTIONS) -Ttext $(LINK_ADDR)
+LDFLAGS=-static -nostartfiles -nodefaultlibs \
+  -T $(link_script) -Wl,-Ttext=$(LINK_ADDR),-Map=$(BINDIR)/$(BOOT_NAME).map,--cref,--gc-sections
 
 ifneq ($(DATA_SECTION_ADDR),)
-LDFLAGS+=-Tdata $(DATA_SECTION_ADDR)
+LDFLAGS+=-Wl,-Tdata=$(DATA_SECTION_ADDR)
 endif
+
+#  -lc		tells the linker to tie in libc
+#  -lgcc 	tells the linker to tie in libgcc
+LDLIBS =
 
 gccversion := $(shell expr `$(CC) -dumpversion`)
 
@@ -307,7 +307,7 @@ PrintFlags:
 $(AT91BOOTSTRAP): $(OBJS)
 	$(if $(wildcard $(BINDIR)),,mkdir -p $(BINDIR))
 	@echo "  LD        "$(BOOT_NAME).elf
-	$(Q)$(LD) $(LDFLAGS) -n -o $(BINDIR)/$(BOOT_NAME).elf $(OBJS)
+	$(Q)$(LD) $(LDFLAGS) -n -o $(BINDIR)/$(BOOT_NAME).elf $(OBJS) $(LDLIBS)
 #	@$(OBJCOPY) --strip-debug --strip-unneeded $(BINDIR)/$(BOOT_NAME).elf -O binary $(BINDIR)/$(BOOT_NAME).bin
 	@$(OBJCOPY) --strip-all $(BINDIR)/$(BOOT_NAME).elf -O binary $@
 	@ln -sf $(BOOT_NAME).bin ${BINDIR}/${SYMLINK}
